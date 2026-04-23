@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ecom I2V Ad Prompts"
+  short_description: "Structured I2V prompts for ecommerce product ads"
+  default_prompt: "Use $ecom-i2v-ad-prompts to analyze a product image folder and generate per-image video prompts plus a planned pre-generation edit plan."

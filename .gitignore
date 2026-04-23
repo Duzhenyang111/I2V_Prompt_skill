@@ -1,0 +1,4 @@
+validation/
+.claude/
+**/__pycache__/
+*.pyc
