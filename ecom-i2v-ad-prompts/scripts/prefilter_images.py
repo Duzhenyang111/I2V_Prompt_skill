@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,14 @@ def image_files(folder: Path) -> list[Path]:
         for path in folder.iterdir()
         if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
     )
+
+
+def validate_folder(folder: Path) -> str | None:
+    if not folder.exists():
+        return f"product_folder does not exist: {folder}"
+    if not folder.is_dir():
+        return f"product_folder is not a directory: {folder}"
+    return None
 
 
 def inspect_image(path: Path, min_size: int, blur_threshold: float) -> dict[str, Any]:
@@ -119,14 +128,32 @@ def build_report(
     duplicate_distance: int = 4,
 ) -> dict[str, Any]:
     folder = Path(product_folder)
+    folder_error = validate_folder(folder)
+    if folder_error:
+        raise ValueError(folder_error)
     items = [inspect_image(path, min_size, blur_threshold) for path in image_files(folder)]
     mark_duplicates(items, duplicate_distance)
     for item in items:
         item.pop("_hash", None)
 
+    summary_warnings: list[str] = []
+    if not items:
+        summary_warnings.append("no_supported_images")
+
+    status_counts = {
+        "pass": sum(1 for item in items if item["status"] == "pass"),
+        "review": sum(1 for item in items if item["status"] == "review"),
+        "reject": sum(1 for item in items if item["status"] == "reject"),
+    }
+
     return {
         "version": "1.0",
         "product_folder": str(folder),
+        "summary": {
+            "total_images": len(items),
+            **status_counts,
+            "warnings": summary_warnings,
+        },
         "thresholds": {
             "min_size": min_size,
             "blur_threshold": blur_threshold,
@@ -136,22 +163,27 @@ def build_report(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Prefilter product images for I2V prompt planning.")
     parser.add_argument("product_folder", help="Folder containing product images.")
     parser.add_argument("--output", help="Path to write image_prefilter_report.json.")
     parser.add_argument("--min-size", type=int, default=512)
     parser.add_argument("--blur-threshold", type=float, default=18.0)
     parser.add_argument("--duplicate-distance", type=int, default=4)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    report = build_report(
-        args.product_folder,
-        min_size=args.min_size,
-        blur_threshold=args.blur_threshold,
-        duplicate_distance=args.duplicate_distance,
-    )
+    try:
+        report = build_report(
+            args.product_folder,
+            min_size=args.min_size,
+            blur_threshold=args.blur_threshold,
+            duplicate_distance=args.duplicate_distance,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     output = Path(args.output) if args.output else Path(args.product_folder) / "image_prefilter_report.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(str(output))
     return 0

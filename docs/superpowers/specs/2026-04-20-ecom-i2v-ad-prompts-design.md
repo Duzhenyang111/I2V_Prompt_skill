@@ -16,6 +16,7 @@ Create a Codex skill for generating high-precision image-to-video prompts for ov
 - Generate one prompt per image for 5-10 second videos.
 - Produce highly structured outputs with strong first-pass usability.
 - Add a final cross-shot edit/composition prompt for turning multiple generated clips into one short ad.
+- Ask the user to confirm the target platform before generation whenever `platform` is missing or ambiguous.
 
 ## Non-Goals
 
@@ -55,12 +56,16 @@ Optional overrides:
 
 ## Output Contract
 
-The skill must produce four sections in order:
+The skill must produce six sections in order:
 
-1. Product-level ad strategy in Chinese
-2. Image sequencing table for the final ad
-3. Per-image analysis card in Chinese plus final English prompt
-4. Multi-video editing/storyboard prompt in Chinese with optional English editing cue terms
+1. Image screening result in Chinese
+2. Product-level ad strategy in Chinese
+3. Image sequencing table for the final ad
+4. Per-image analysis card in Chinese plus final English prompt and generation parameters
+5. Chinese pre-editing explanation
+6. `planned_final_edit_plan.json`
+
+Single-platform runs output one `planned_final_edit_plan.json`. Dual-platform runs output `planned_final_edit_plan_tiktok.json` and `planned_final_edit_plan_amazon.json`.
 
 ## Decision Framework
 
@@ -104,12 +109,16 @@ The skill should contain:
 - `references/platform-presets.md`
 - `references/prompt-template.md`
 - `agents/openai.yaml`
+- `scripts/prefilter_images.py`
+- root `requirements.txt`
+- root `quick_validate.py`
 
-No extra README or auxiliary docs should be added.
+README files may exist at the repository root to explain installation and usage.
 
 ## Validation
 
 - Run `quick_validate.py` on the finished skill.
+- Run the Python tests that cover the validator, prefilter behavior, dependency declaration, and output contract.
 - Manually inspect the generated `agents/openai.yaml` values for clarity and correct `$skill-name` usage.
 - Verify the skill instructions are concise, procedural, and contain no placeholder text.
 

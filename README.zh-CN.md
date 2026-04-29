@@ -6,6 +6,8 @@
 
 - `ecom-i2v-ad-prompts/` —— 主 skill 定义与参考资料
 - `ecom-i2v-ad-prompts/scripts/prefilter_images.py` —— 图片客观预筛脚本
+- `quick_validate.py` —— 仓库契约校验脚本
+- `requirements.txt` —— 预筛与本地验证所需的 Python 依赖
 - `docs/` —— 设计说明和补充文档
 - `validation/` —— 本地验证输出与测试产物，不会上传到 GitHub
 
@@ -41,6 +43,8 @@ platform: "amazon" # 也可以是 "tiktok" 或 ["amazon", "tiktok"]
 product_folder: "/abs/path/to/product_images"
 ```
 
+如果 `platform` 缺失或不明确，skill 必须先询问用户要生成哪个平台：`amazon`、`tiktok`，或两个都要。在平台确认前，不生成提示词、生成参数或预剪辑计划。
+
 可选字段：
 
 - `campaign_goal`
@@ -59,6 +63,8 @@ skill 会按下面顺序输出结果：
 5. `中文预剪辑说明`
 6. `planned_final_edit_plan.json`
 
+单平台任务输出 `planned_final_edit_plan.json`；双平台任务输出 `planned_final_edit_plan_tiktok.json` 和 `planned_final_edit_plan_amazon.json`，不要合并成一个折中版本。
+
 ## 关键规则
 
 - 一个文件夹代表一个商品广告项目，不要把其中图片当成互不相关的单图任务。
@@ -72,6 +78,10 @@ skill 会按下面顺序输出结果：
 ## 预筛脚本用法
 
 在进行语义筛选前，先运行内置脚本：
+
+```bash
+python -m pip install -r requirements.txt
+```
 
 ```bash
 python ecom-i2v-ad-prompts/scripts/prefilter_images.py "<product_folder>" --output "<product_folder>/image_prefilter_report.json"

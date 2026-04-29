@@ -32,6 +32,8 @@ Accept these optional overrides when provided:
 
 If optional fields are missing, infer sane defaults from the product category, target audience, platform, and image content.
 
+If `platform` is missing or ambiguous, ask the user which platform to target before prompt generation. Supported primary answers are `amazon`, `tiktok`, or both. Do not generate image prompts, generation parameters, or planned edit plans until the platform is known.
+
 ## Operating Rules
 
 Follow these rules every time:
@@ -48,6 +50,7 @@ Follow these rules every time:
 10. Split every per-image generation result into `prompt`, `negative_prompt`, and `generation_params`.
 11. Output `planned_final_edit_plan.json` as a pre-generation plan only. It is not directly executable by `ffmpeg`.
 12. Never call the pre-generation plan `final_edit_plan.json`.
+13. Ask the user which platform to target when the input does not clearly specify `amazon`, `tiktok`, or both; do not generate until the platform is confirmed.
 
 ## Workflow
 
@@ -223,7 +226,9 @@ Produce two outputs:
 1. `中文预剪辑说明`
 2. `planned_final_edit_plan.json`
 
-Use [references/prompt-template.md](references/prompt-template.md) for the exact JSON schema and validation rules. Use [references/platform-presets.md](references/platform-presets.md) for platform-specific planned edit variants.
+For a single platform, output one `planned_final_edit_plan.json`. For dual-platform requests, output `planned_final_edit_plan_tiktok.json` and `planned_final_edit_plan_amazon.json` instead of one compromise plan.
+
+Use [references/prompt-template.md](references/prompt-template.md) for the exact JSON schema and validation rules. Use [references/platform-presets.md](references/platform-presets.md) for platform-specific planned edit variants. Each planned clip must preserve the source mapping with `source_image_id`, `expected_render_path`, and `sequence_role`.
 
 ## Hard Constraints
 
@@ -233,6 +238,7 @@ Do not:
 - generate impossible hand interactions
 - inspect generated videos in this stage-one skill
 - output the pre-generation plan as `final_edit_plan.json`
+- generate prompts or planned edit plans before the target platform is known
 
 Use [references/prompt-template.md](references/prompt-template.md) for negative prompt constraints and output schema details.
 

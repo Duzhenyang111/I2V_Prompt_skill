@@ -6,6 +6,8 @@ A Claude Code skill for generating stage-one structured image-to-video prompts f
 
 - `ecom-i2v-ad-prompts/` — the main skill definition and reference materials
 - `ecom-i2v-ad-prompts/scripts/prefilter_images.py` — objective image prefilter script
+- `quick_validate.py` — repository contract validator
+- `requirements.txt` — Python dependency list for prefiltering and validation
 - `docs/` — design and supporting documentation
 - `validation/` — local validation outputs and test artifacts, excluded from GitHub upload
 
@@ -38,6 +40,8 @@ platform: "amazon" # or "tiktok" or ["amazon", "tiktok"]
 product_folder: "/abs/path/to/product_images"
 ```
 
+If `platform` is missing or unclear, the skill must ask whether the target is `amazon`, `tiktok`, or both before generating prompts or a planned edit plan.
+
 Optional fields:
 
 - `campaign_goal`
@@ -56,6 +60,8 @@ The skill returns results in this order:
 5. `中文预剪辑说明`
 6. `planned_final_edit_plan.json`
 
+Single-platform tasks output `planned_final_edit_plan.json`. Dual-platform tasks output `planned_final_edit_plan_tiktok.json` and `planned_final_edit_plan_amazon.json`; they should not be merged into one compromise plan.
+
 ## Key rules
 
 - Treat one folder as one product campaign, not isolated single images.
@@ -69,6 +75,10 @@ The skill returns results in this order:
 ## Prefilter command
 
 Run the bundled script before semantic image screening:
+
+```bash
+python -m pip install -r requirements.txt
+```
 
 ```bash
 python ecom-i2v-ad-prompts/scripts/prefilter_images.py "<product_folder>" --output "<product_folder>/image_prefilter_report.json"

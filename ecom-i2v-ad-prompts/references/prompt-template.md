@@ -140,6 +140,9 @@ Use `platform-presets.md` to fill platform-specific values.
   "clips": [
     {
       "clip_id": "clip_01",
+      "source_image_id": "image_03.jpg",
+      "sequence_role": "hook opener",
+      "expected_render_path": "renders/image_03_tiktok.mp4",
       "source_video": "renders/output_3.mp4",
       "planned_trim_in": 0.8,
       "planned_trim_out": 2.8,
@@ -149,6 +152,9 @@ Use `platform-presets.md` to fill platform-specific values.
     },
     {
       "clip_id": "clip_02",
+      "source_image_id": "image_02.jpg",
+      "sequence_role": "feature proof",
+      "expected_render_path": "renders/image_02_tiktok.mp4",
       "source_video": "renders/output_2.mp4",
       "planned_trim_in": 1.0,
       "planned_trim_out": 3.5,
@@ -164,7 +170,9 @@ Use `platform-presets.md` to fill platform-specific values.
 
 - `total_duration` must be numeric and `<= 15.0`
 - `stage` must equal `pre_generation`
+- every clip must include `source_image_id`, `sequence_role`, and `expected_render_path`
 - every `source_video` must point to the expected generated clip path, not an image path
+- before generation exists, `source_video` should match `expected_render_path`
 - `planned_trim_out` must be greater than `planned_trim_in`
 - `timeline_end` must be greater than `timeline_start`
 - clips must be listed in ascending timeline order
