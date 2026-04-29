@@ -19,7 +19,7 @@ category: ""
 target_audience: ""
 selling_points:
   - ""
-platform: "amazon" # supported primary values: "amazon", "tiktok", or ["amazon", "tiktok"]
+platform: "tiktok" # default; also supports "amazon" or ["tiktok", "amazon"]
 product_folder: "/abs/path/to/product_images"
 ```
 
@@ -32,7 +32,7 @@ Accept these optional overrides when provided:
 
 If optional fields are missing, infer sane defaults from the product category, target audience, platform, and image content.
 
-If `platform` is missing or ambiguous, ask the user which platform to target before prompt generation. Supported primary answers are `amazon`, `tiktok`, or both. Do not generate image prompts, generation parameters, or planned edit plans until the platform is known.
+If `platform` is missing, default to `tiktok`. Ask the user which platform to target only when the provided platform is unsupported or ambiguous, such as "social and marketplace" without naming TikTok, Amazon, or both.
 
 ## Operating Rules
 
@@ -50,7 +50,32 @@ Follow these rules every time:
 10. Split every per-image generation result into `prompt`, `negative_prompt`, and `generation_params`.
 11. Output `planned_final_edit_plan.json` as a pre-generation plan only. It is not directly executable by `ffmpeg`.
 12. Never call the pre-generation plan `final_edit_plan.json`.
-13. Ask the user which platform to target when the input does not clearly specify `amazon`, `tiktok`, or both; do not generate until the platform is confirmed.
+13. Default to `tiktok` when `platform` is omitted. Ask the user which platform to target only when the provided platform is unsupported or ambiguous.
+14. Use one unified Review AI after each major AI-authored stage. Review AI judges whether the stage output is usable; it does not create campaign content.
+
+## Unified Review AI
+
+Run Review AI after these stages:
+
+- AI semantic image screening
+- product-level ad strategy
+- per-image analysis cards and generation prompts
+- planned edit plan
+
+Review AI must return a compact machine-readable block:
+
+```yaml
+review_result:
+  status: "pass" # pass | retry | ask_user
+  failed_checks:
+    - ""
+  retry_instruction: ""
+  user_question: ""
+```
+
+If Review AI returns `pass`, continue to the next stage. If Review AI returns `retry`, rerun the failed stage once using `retry_instruction` and then review again. If Review AI returns `ask_user`, stop and ask `user_question` before continuing.
+
+Do not let Review AI rewrite prompts, change strategy, or invent product facts directly. Its job is only to evaluate, explain failure, and provide bounded retry instructions.
 
 ## Workflow
 
@@ -62,9 +87,12 @@ Use this skill for stage one only:
 product image folder
 -> programmatic image prefilter
 -> AI semantic image screening
+-> Review AI gate
 -> image inspection for accepted images
 -> per-image prompt / negative_prompt / generation_params
+-> Review AI gate
 -> planned_final_edit_plan.json
+-> Review AI gate
 -> image-to-video generation happens outside this skill
 ```
 
@@ -135,6 +163,8 @@ Choose one dominant ad route:
 - `feature-proof detail focus`
 
 Use the product category, target audience, selling points, and platform to justify the choice.
+
+After writing the strategy, run Review AI. It should reject strategies that ignore TikTok-first defaults, invent product claims, mismatch the selected platform, or fail to explain the campaign route.
 
 ### 4. Inspect and Classify Accepted Images
 
@@ -217,6 +247,8 @@ Use [references/prompt-template.md](references/prompt-template.md) for the requi
 
 Do not write vague prompts like "make it cinematic" or "high quality advertisement". Replace vague adjectives with concrete shot instructions.
 
+After writing per-image prompts, run Review AI. It should reject prompts that are not image-specific, are not in English, mix negative constraints into the positive prompt, invent product features, or use risky motion that may deform the product.
+
 ### 8. Build the Planned 15-Second Assembly Plan
 
 After all per-image outputs, choose only the strongest source images for the intended short ad. Do not assume every image should be generated or that every generated clip will be usable.
@@ -230,6 +262,8 @@ For a single platform, output one `planned_final_edit_plan.json`. For dual-platf
 
 Use [references/prompt-template.md](references/prompt-template.md) for the exact JSON schema and validation rules. Use [references/platform-presets.md](references/platform-presets.md) for platform-specific planned edit variants. Each planned clip must preserve the source mapping with `source_image_id`, `expected_render_path`, and `sequence_role`.
 
+After building the planned edit plan, run Review AI. It should reject plans with invalid JSON, total duration over 15 seconds, non-ascending timelines, missing source mappings, or platform-inconsistent sequencing.
+
 ## Hard Constraints
 
 Do not:
@@ -238,7 +272,7 @@ Do not:
 - generate impossible hand interactions
 - inspect generated videos in this stage-one skill
 - output the pre-generation plan as `final_edit_plan.json`
-- generate prompts or planned edit plans before the target platform is known
+- silently invent a third platform workflow when the provided platform is unsupported or ambiguous
 
 Use [references/prompt-template.md](references/prompt-template.md) for negative prompt constraints and output schema details.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ecom I2V Prompt Generator"
+  short_description: "Storyboard and I2V prompt manifests"
+  default_prompt: "Use $ecom-i2v-prompt-generator to analyze a product image folder and output 01_storyboard_plan.md plus 02_i2v_prompt_manifest.json."

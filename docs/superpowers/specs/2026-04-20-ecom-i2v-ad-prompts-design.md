@@ -16,7 +16,8 @@ Create a Codex skill for generating high-precision image-to-video prompts for ov
 - Generate one prompt per image for 5-10 second videos.
 - Produce highly structured outputs with strong first-pass usability.
 - Add a final cross-shot edit/composition prompt for turning multiple generated clips into one short ad.
-- Ask the user to confirm the target platform before generation whenever `platform` is missing or ambiguous.
+- Default to TikTok when `platform` is missing, and ask the user to confirm only when the provided platform is unsupported or ambiguous.
+- Add one unified Review AI gate after each major AI-authored stage. Review AI returns `pass`, `retry`, or `ask_user`; it does not rewrite campaign content directly.
 
 ## Non-Goals
 
@@ -43,9 +44,11 @@ category: ""
 target_audience: ""
 selling_points:
   - ""
-platform: "amazon"
+platform: "tiktok"
 product_folder: "/abs/path/to/product_images"
 ```
+
+TikTok is the default platform. Amazon and dual-platform generation are explicit alternatives.
 
 Optional overrides:
 
@@ -66,6 +69,16 @@ The skill must produce six sections in order:
 6. `planned_final_edit_plan.json`
 
 Single-platform runs output one `planned_final_edit_plan.json`. Dual-platform runs output `planned_final_edit_plan_tiktok.json` and `planned_final_edit_plan_amazon.json`.
+
+Each major AI-authored stage must be followed by a Review AI block:
+
+```yaml
+review_result:
+  status: "pass" # pass | retry | ask_user
+  failed_checks: []
+  retry_instruction: ""
+  user_question: ""
+```
 
 ## Decision Framework
 

@@ -1,6 +1,10 @@
 validation/
 .claude/
+tests/
 **/__pycache__/
 *.pyc
+*.pyo
+.coverage
+htmlcov/
 .pytest_cache/
 pytest-cache-files-*/

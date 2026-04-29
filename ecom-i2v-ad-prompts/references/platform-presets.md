@@ -1,11 +1,12 @@
 # Platform Presets
 
-Optimize primarily for TikTok and Amazon. If another platform is provided, map it to the closer of these two patterns instead of inventing a third full workflow.
+Optimize primarily for TikTok, with Amazon as the secondary marketplace variant. If `platform` is omitted, use TikTok. If another platform is provided, map it to the closer of these two patterns only when the intent is clear; otherwise ask the user which platform to target.
 
 ## Platform Decision
 
 - Use `TikTok` when the goal is paid social, short-video feed discovery, creator-style demonstration, fast hook, or vertical ad testing.
 - Use `Amazon` when the goal is ecommerce listing support, Sponsored Brands Video, product page media, marketplace conversion, or product-first trust.
+- If no platform is provided, default to `TikTok`.
 - If the user says both `TikTok` and `Amazon`, generate platform-specific prompt variants and planned edit plans. Do not force one compromise prompt.
 
 ## TikTok Rules

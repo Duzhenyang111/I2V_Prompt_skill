@@ -5,6 +5,8 @@
 ## 仓库内容
 
 - `ecom-i2v-ad-prompts/` —— 主 skill 定义与参考资料
+- `ecom-i2v-prompt-generator/` —— 优化后的提示词生成器，输出 `01_storyboard_plan.md` 和 `02_i2v_prompt_manifest.json`
+- `ecom-i2v-video-workflow/` —— 可自动执行的视频生产工作流，消费 prompt manifest，生成 clips，审查视频，生成 `04_final_edit_plan.json` 并合成最终视频
 - `ecom-i2v-ad-prompts/scripts/prefilter_images.py` —— 图片客观预筛脚本
 - `quick_validate.py` —— 仓库契约校验脚本
 - `requirements.txt` —— 预筛与本地验证所需的 Python 依赖
@@ -14,6 +16,11 @@
 ## Skill 的用途
 
 这个 skill 以“一个商品文件夹”为单位工作。一个文件夹中的多张商品图会被视为同一个商品广告项目，而不是彼此独立的单张图片。
+
+当前仓库已拆成两个新的推荐 skill：
+
+1. `ecom-i2v-prompt-generator`：只负责分镜规划和提示词清单。
+2. `ecom-i2v-video-workflow`：负责图生视频执行、clip 审查、最终剪辑计划和 ffmpeg 合成。
 
 它主要负责第一阶段的规划工作：
 
@@ -39,11 +46,11 @@ category: ""
 target_audience: ""
 selling_points:
   - ""
-platform: "amazon" # 也可以是 "tiktok" 或 ["amazon", "tiktok"]
+platform: "tiktok" # 默认；也可以是 "amazon" 或 ["tiktok", "amazon"]
 product_folder: "/abs/path/to/product_images"
 ```
 
-如果 `platform` 缺失或不明确，skill 必须先询问用户要生成哪个平台：`amazon`、`tiktok`，或两个都要。在平台确认前，不生成提示词、生成参数或预剪辑计划。
+TikTok 是默认平台。如果 `platform` 缺失，直接按 TikTok 生成。如果用户提供的平台不受支持或语义不明确，再询问目标是 `tiktok`、`amazon`，还是两个都要。
 
 可选字段：
 
@@ -64,6 +71,50 @@ skill 会按下面顺序输出结果：
 6. `planned_final_edit_plan.json`
 
 单平台任务输出 `planned_final_edit_plan.json`；双平台任务输出 `planned_final_edit_plan_tiktok.json` 和 `planned_final_edit_plan_amazon.json`，不要合并成一个折中版本。
+
+## Skill 流程图
+
+```mermaid
+flowchart TD
+  A["用户提供商品信息和 product_folder"] --> B{"是否提供 platform?"}
+  B -- "未提供" --> C["默认使用 TikTok"]
+  B -- "TikTok / Amazon / 两者" --> D["使用对应平台预设"]
+  B -- "不支持或不明确" --> E["询问用户目标平台"]
+  C --> F["枚举全部源图片"]
+  D --> F
+  E --> D
+  F --> G["运行客观预筛脚本"]
+  G --> H["直接检查 pass/review 图片"]
+  H --> I["AI 语义图片筛选"]
+  I --> R1["Review AI: review_result"]
+  R1 -- "status: retry" --> I
+  R1 -- "status: ask_user" --> E
+  R1 -- "status: pass" --> J["生成商品级广告策略"]
+  J --> R2["Review AI: review_result"]
+  R2 -- "status: retry" --> J
+  R2 -- "status: ask_user" --> E
+  R2 -- "status: pass" --> K["识别入选图片视角"]
+  K --> L["分配广告分镜角色"]
+  L --> M["输出中文分析卡和英文 I2V 提示词"]
+  M --> R3["Review AI: review_result"]
+  R3 -- "status: retry" --> M
+  R3 -- "status: ask_user" --> E
+  R3 -- "status: pass" --> N["生成 planned 预剪辑计划"]
+  N --> R4["Review AI: review_result"]
+  R4 -- "status: retry" --> N
+  R4 -- "status: ask_user" --> E
+  R4 -- "status: pass" --> O["图生视频生成在 skill 外执行"]
+```
+
+Review AI 统一返回：
+
+```yaml
+review_result:
+  status: "pass" # pass | retry | ask_user
+  failed_checks: []
+  retry_instruction: ""
+  user_question: ""
+```
 
 ## 关键规则
 

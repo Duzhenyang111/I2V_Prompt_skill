@@ -127,6 +127,48 @@ Use `platform-presets.md` to fill platform-specific values.
   重要限制: "这只是生成前预案，不是 ffmpeg 最终执行计划；真实 final_edit_plan.json 需要在小视频生成后通过视频质检再生成。"
 ```
 
+## Review AI Template
+
+Use this after each major AI-authored stage. Review AI evaluates the current stage output and returns only this schema:
+
+```yaml
+Review AI:
+  review_result:
+    status: "pass"
+    failed_checks: []
+    retry_instruction: ""
+    user_question: ""
+```
+
+Possible statuses:
+
+```yaml
+Review AI:
+  review_result:
+    status: "pass"
+    failed_checks: []
+    retry_instruction: ""
+    user_question: ""
+---
+Review AI:
+  review_result:
+    status: "retry"
+    failed_checks:
+      - "The prompt invents an unsupported product feature."
+    retry_instruction: "Rewrite the per-image prompt using only visible product details and the provided selling points."
+    user_question: ""
+---
+Review AI:
+  review_result:
+    status: "ask_user"
+    failed_checks:
+      - "The platform request is unsupported or ambiguous."
+    retry_instruction: ""
+    user_question: "Should this be optimized for TikTok, Amazon, or both?"
+```
+
+Review AI must not rewrite the stage output directly. It only decides `pass`, `retry`, or `ask_user`, then provides the narrow instruction needed for the next action.
+
 ## planned_final_edit_plan.json Template
 
 ```json

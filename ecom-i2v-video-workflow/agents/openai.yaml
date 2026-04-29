@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ecom I2V Video Workflow"
+  short_description: "Generate clips and assemble final ads"
+  default_prompt: "Use $ecom-i2v-video-workflow to read 02_i2v_prompt_manifest.json, generate clips, review them, build final_edit_plan.json, and assemble the final video."
